@@ -1,0 +1,30 @@
+<form class="form-group" [formGroup]="registerForm" (ngSubmit)="register()" autocomplete="off">
+    <input class="form-control" formControlName="username" placeholder="Username">
+    <span *ngIf="username.errors?.['required'] && username.touched">
+        Username is required
+    </span>
+    <input class="form-control" formControlName="email" placeholder="Email" email>
+    <span *ngIf="email.errors?.['required'] && email.touched">
+        Email is required
+    </span>
+    <div *ngIf="email.errors && email.touched">
+        Email is invalid
+    </div>
+    <input class="form-control" formControlName="password" type="password" placeholder="Password"
+        (change)="onPasswordChange()">
+    <span *ngIf="password.errors?.['required'] && password.touched">
+        Password is required
+    </span>
+    <input class="form-control" formControlName="confirmPassword" type="password" placeholder="Confirm Password"
+        (change)="onPasswordChange()">
+    <span *ngIf="confirmPassword.errors?.['required'] && confirmPassword.touched">
+        Password confirmation is required
+    </span>
+    <span *ngIf="confirmPassword.errors?.['mismatch'] && confirmPassword.touched">
+        Passwords do not match
+    </span>
+    <div class="form-group text-center">
+        <button [disabled]='!registerForm.valid' class="btn btn-success mr-2" type="submit">Register</button>
+        <button class="btn btn-default mr-2" (click)="cancel()" type="button">Cancel</button>
+    </div>
+</form>

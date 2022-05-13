@@ -1,0 +1,42 @@
+
+
+
+<div class ="container-fluid">
+  <div class ="row">
+    <div class ="col-md-1 col-sm-1">
+      <div class="tab">
+        <button class="tablinks active" (click)="openComponent()">{{tabName}}</button>
+      </div>
+    </div>
+    <div class ="col-md-10 col-sm-10">
+      <div *ngIf="visible">
+        <br>
+        <p>Private chat to {{receiverConnectionId}} - {{receiverName}}</p>
+        <p>Private chat initiated by {{senderConnectionId}} - {{senderName}}</p>
+      
+        <div class="row justify-content-center flex-grow-1">
+          <div class="text-white">
+            <label for="message">Message</label>
+            <form (ngSubmit)="sendPrivateMessage()" #chatForm="ngForm">
+              <div class="form-group">
+                <textarea class="form-control" placeholder="Type a message" type="text" name="textarea"
+                  [(ngModel)]="privateMessage" rows="2" cols="110"></textarea>
+              </div>
+              <button class="btn btn-primary h-50" style="align-self:middle;" type="submit" id="sendmessage" [disabled]="!chatForm.valid">
+                Send
+              </button>
+              <button class="emoji-btn" (click)="isEmojiPickerVisible = !isEmojiPickerVisible;">😀</button>
+              <br>
+              <emoji-mart class="emoji-mart" *ngIf="isEmojiPickerVisible" (emojiSelect)="addEmoji($event)"
+                title="Choose your emoji"></emoji-mart>
+            </form>
+          </div>
+        </div>
+      
+        <div *ngFor="let message of privateMessages">
+          <span>{{message}}</span>
+        </div>
+      </div>
+     </div>
+  </div>
+</div>

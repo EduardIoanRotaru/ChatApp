@@ -1,0 +1,22 @@
+V1
+public chat
+users list
+emoticons
+private chat
+basic dumb css
+Deploy
+
+V2
+Authentication and Authorization
+Users with login or not, prevent same connection to same Users
+Details - like validation, opening chats from user list too
+
+Create own chat by group, give administrator role and be able to give roles or ban people
+Custom css for each chat - some basic colors to change
+notify when new message
+status, disconnected or connected
+friendlist
+
+V3
+recycle the main chat with private chats when opened
+add own emoticons 
