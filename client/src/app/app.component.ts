@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from './services/auth.service';
 import { StartupService } from './services/startup.service';
 
 @Component({
@@ -9,15 +10,21 @@ import { StartupService } from './services/startup.service';
 })
 export class AppComponent implements OnInit {
 
-  constructor(private router: Router, private startup: StartupService) {}
+  loggedIn!: boolean;
+
+  constructor(private router: Router, public authService: AuthService) { }
 
 
-  ngOnInit(){
+  ngOnInit() {
 
-        if (!this.startup.startupData) {
-          // assign a random username and a random photo
-          // store it in an object along with connection list
-      }
+    // if (!this.startup.startupData) {
+    //     // assign a random username and a random photo
+    //     // store it in an object along with connection list
+    // }
+    this.authService.isLoggedIn();
   }
-   
+
+  logout() {
+    this.authService.logout();
+  }
 }

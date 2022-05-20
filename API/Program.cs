@@ -55,10 +55,12 @@ app.UseExceptionHandler(builder =>
     });
 });
 
+app.UseHttpsRedirection();
+
 app.UseRouting();
 
-app.UseHttpsRedirection();  
 app.UseCors("CorsPolicy");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

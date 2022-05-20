@@ -68,5 +68,10 @@ namespace API.Hubs
                 }
             }
         }
+
+        public bool KeyExists(T key)
+        {
+            return _connections.ContainsKey(key);
+        }
     }
 }

@@ -10,20 +10,20 @@ export class StartupService {
 
 	constructor(private http: HttpClient, private authService: AuthService) {}
 
-	load(): any {
-		this.authService.verifyToken().pipe(
-			tap((response: any) => {
-				this.tokenIsValid = response;
+	// load(): any {
+	// 	this.authService.verifyToken().pipe(
+	// 		tap((response: any) => {
+	// 			this.tokenIsValid = response;
 
-				if (!this.tokenIsValid) {
-					localStorage.removeItem('token');
-					this._startupData = false; // so no error for now
-				}
-			})
-		).toPromise()
-        .then((data:any) => (this._startupData = data))
-        .catch((err: any) => Promise.resolve());
-	}
+	// 			if (!this.tokenIsValid) {
+	// 				localStorage.removeItem('token');
+	// 				this._startupData = false; // so no error for now
+	// 			}
+	// 		})
+	// 	).toPromise()
+    //     .then((data:any) => (this._startupData = data))
+    //     .catch((err: any) => Promise.resolve());
+	// }
 
 	get startupData(): any {
 		return this._startupData;

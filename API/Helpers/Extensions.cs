@@ -6,6 +6,8 @@ using API.Models.Contracts;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Helpers
@@ -37,9 +39,6 @@ namespace API.Helpers
 
         public static IServiceCollection DatabaseContextExtensions(this IServiceCollection services, IConfiguration config)
         {
-            var connectionString = config.GetConnectionString("DefaultConnection");
-            services.AddDbContext<ChatDbContext>(options => options.UseSqlServer(connectionString));
-
             var usersConnectionString = config.GetConnectionString("UsersConnection");
             services.AddDbContext<UserDbContext>(options => options.UseSqlServer(usersConnectionString));
 
@@ -48,8 +47,13 @@ namespace API.Helpers
 
         public static IServiceCollection ApplicationExtensions(this IServiceCollection services, IConfiguration config)
         {
+            IdentityModelEventSource.ShowPII = true;
+
+            services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
+
             services.AddScoped<IAuthService, AuthService>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddScoped<IUserProfileService, UserProfileService>();
 
             var appSettings = config.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettings);
@@ -76,7 +80,17 @@ namespace API.Helpers
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(options =>
               {
-                  options.Authority = "https://localhost:7005/";
+                  //   options.Authority = "http://rotaru15-001-site1.itempurl.com";
+                  options.Authority = "https://localhost:5001/";
+                  options.Configuration = new OpenIdConnectConfiguration();
+                  options.TokenValidationParameters = new TokenValidationParameters
+                  {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(config.GetValue<string>("AppSettings:Secret"))),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ClockSkew = TimeSpan.Zero
+                  };
                   options.Events = new JwtBearerEvents
                   {
                       OnMessageReceived = context =>
@@ -101,11 +115,13 @@ namespace API.Helpers
                                   }, out SecurityToken validatedToken);
 
                                   var jwtToken = (JwtSecurityToken)validatedToken;
+
+                                  var id = jwtToken.Claims.First(x => x.Type == "nameid").Value;
                                   var username = jwtToken.Claims.First(x => x.Type == "unique_name").Value;
 
-                             
-                                      context.HttpContext.Items["username"] = username;
-                                      context.HttpContext.Items["tokenIsValid"] = true;
+                                  context.HttpContext.Items["id"] = id;
+                                  context.HttpContext.Items["username"] = username;
+                                  context.HttpContext.Items["tokenIsValid"] = true;
                               }
                               catch
                               {
@@ -116,6 +132,7 @@ namespace API.Helpers
                           {
                               context.HttpContext.Items["tokenIsValid"] = false;
                           }
+
                           return Task.CompletedTask;
                       }
                   };

@@ -1,52 +1,11 @@
-<!-- <div class="container h-200">
-  <div class="row justify-content-center  mt-5" style="background-color:#e7eaef">
-    <div class="col-6" style="background-color:#0c6178">
-      <div class="h-200 d-flex flex-column">
-        <div class="row justify-content-center" style="background-color: #0C6178">
-          <div class="text-white">
-            <div style="height:500px">
-              <div *ngFor="let message of messages">
-                <span>{{message}}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="row justify-content-center flex-grow-1">
-          <div class="text-white">
-            <label for="message">Message</label>
-            <form (ngSubmit)="sendMessage()" #chatForm="ngForm">
-              <div class="form-group">
-                <textarea class="form-control" placeholder="Type a message" type="text" name="textarea"
-                  [(ngModel)]="message" rows="2" cols="110"></textarea>
-              </div>
-              <button type="submit" id="sendmessage" [disabled]="!chatForm.valid">
-                Send
-              </button>
-              <button (click)="isEmojiPickerVisible = !isEmojiPickerVisible;">😀</button>
-              <br>
-              <emoji-mart class="emoji-mart" *ngIf="isEmojiPickerVisible" (emojiSelect)="addEmoji($event)"
-                title="Choose your emoji"></emoji-mart>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-2 text-white" style="background-color:#748CF8">
-      <p style="display:flex;">{{username}}</p>
-      <div *ngFor="let con of connections | keyvalue">
-        <p style="display:flex" (click)="createNewPrivateMessageComponent(con.key, con.value)">{{con.key}}</p>
-      </div>
-    </div>
-  </div>
-</div> -->
-
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-sm-8">
       <div class="text-white">
-        <div style="height:500px; background-color: #0C6178">
-          <div *ngFor="let message of messages">
-            <span style="padding:20px">{{message}}</span>
+        <div style="height:500px; overflow-y: scroll; background-color: #0C6178">
+          <div *ngFor="let message of messages" style="display: flex;align-items:center;">
+            <img src="{{message.img}}" alt="" height="30" width="30" style="margin-top:10px;margin-left:10px">
+            <span style="padding:20px">{{message.message}}</span>
           </div>
         </div>
       </div>
@@ -58,16 +17,18 @@
               [(ngModel)]="message" rows="2" cols="110" style="display:inline-block;resize:none;"></textarea>
           </div>
           <button (click)="isEmojiPickerVisible = !isEmojiPickerVisible;" class="emoji-btn">😀</button>
-          <button class="btn btn-primary h-50" style="align-self:middle;" type="submit" id="sendmessage" [disabled]="!chatForm.valid">
+          <button class="btn btn-primary h-50" style="align-self:middle;" type="submit" id="sendmessage"
+            [disabled]="!chatForm.valid">
             Send
           </button>
-          <emoji-mart class="emoji-mart" *ngIf="isEmojiPickerVisible" (emojiSelect)="addEmoji($event)" title="Choose your emoji"></emoji-mart>
+          <emoji-mart class="emoji-mart" *ngIf="isEmojiPickerVisible" (emojiSelect)="addEmoji($event)"
+            title="Choose your emoji"></emoji-mart>
         </form>
       </div>
     </div>
     <div class="col-sm-2">
       <div class="text-white" style="height:500px;background-color:#748CF8;padding:10px;">
-        <p style="display:flex;">{{username}}</p>
+        <p style="display:flex;" (click)="openModal(content)">{{username}}</p>
         <div *ngFor="let con of connections | keyvalue">
           <p style="display:flex" (click)="createNewPrivateMessageComponent(con.key, con.value)">{{con.key}}</p>
         </div>
@@ -75,6 +36,39 @@
     </div>
   </div>
 </div>
+
+<!-- Private chat -->
 <div class="container" (openComponent)="openTab($event)">
   <div class="tabs" #componentHolder></div>
 </div>
+
+<!-- Modal Profile Edit -->
+<ng-template #content let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <form>
+      <div class="mb-3">
+        <img src="{{photo}}"  height="30" width="30"/>
+        <input type="text" placeholder="Edit your name" [(ngModel)]="username" [ngModelOptions]="{standalone: true}">
+        <div>
+          <p>Avatars</p>
+          <div *ngFor="let image of images">
+            <img src="{{image.name}}" alt="" height="30" width="30" style="margin-top:10px;margin-left:10px" (click)="updateImage(image.name)">
+          </div>
+        </div>
+        <div>
+          <form action="" method="post" enctype="multipart/form-data">
+            <input type="file" (change)="uploadImage($event)">
+          </form>
+          <label>Update Image</label>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="saveProfile()">Save</button>
+  </div>
+</ng-template>

@@ -1,6 +1,12 @@
 using API.Hubs;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.SignalR;
+using API.Helpers;
+using API.Models.DTO;
+using System.Drawing;
+using API.DAL;
+using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 [EnableCors("CorsPolicy")]
 public class ChatHub : Hub
@@ -9,16 +15,20 @@ public class ChatHub : Hub
             new ConnectionMapping<string>();
 
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly UserDbContext _context;
+    private readonly IMapper _mapper;
 
     public ChatHub(
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor, UserDbContext context, IMapper mapper)
     {
         _httpContextAccessor = httpContextAccessor;
+        _context = context;
+        _mapper = mapper;
     }
 
-    public async Task SendMessage(string user, string message)
+    public async Task SendMessage(string user, string photoUrl, string message)
     {
-        await Clients.All.SendAsync("SendMessage", user, message);
+        await Clients.All.SendAsync("SendMessage", user, photoUrl, message);
     }
 
     public async Task SendMessageToUser(string receiverName, string receiverConnectionId, string senderConnectionId, string privateMessage, string senderName)
@@ -29,25 +39,56 @@ public class ChatHub : Hub
     public override async Task OnConnectedAsync()
     {
         var username = string.Empty;
+        var randomPhoto = string.Empty;
+
+        UserProfileDto userprofile = new UserProfileDto();
 
         var tokenValid = (bool)_httpContextAccessor.HttpContext.Items["tokenIsValid"];
 
         if (tokenValid)
         {
-            username = _httpContextAccessor.HttpContext.Items["username"].ToString();
+            var userId = int.TryParse(_httpContextAccessor.HttpContext.Items["id"].ToString(), out int id);
+
+            var user = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user != null) userprofile.Id = id;
+
+            if (username == null)
+            {
+                username = await RandomUsername();
+                user.Name = username;
+            }
+
+            if (randomPhoto == null)
+            {
+                randomPhoto = await RandomPhoto();
+                user.PhotoUrl = randomPhoto;
+            }
+
+            _context.Attach(user);
+            _context.Entry(user).State = EntityState.Modified;
+
+            if (await _context.SaveChangesAsync() > 0)
+            {
+                userprofile.ImagePublicId = user.PublicId;
+                userprofile.Name = user.Name;
+                userprofile.PhotoUrl = user.PhotoUrl;
+            }
         }
         else
         {
-            var rand = new Random();
-            var number = rand.Next(1, 10);
+            username = await RandomUsername();
+            randomPhoto = await RandomPhoto();
 
-            username = "bob" + number;
-            _httpContextAccessor.HttpContext.Items["username"] = username;
+            userprofile.Name = username;
+            userprofile.PhotoUrl = randomPhoto;
         }
+
+        _httpContextAccessor.HttpContext.Items["username"] = username;
 
         _connections.Add(username, Context.ConnectionId);
 
-        await Clients.Caller.SendAsync("GetYourUsername", username);
+        await Clients.Caller.SendAsync("GetYourUsername", userprofile);
         await Clients.All.SendAsync("UpdateConnectionsList", _connections.GetAllActiveConnections());
     }
 
@@ -65,8 +106,23 @@ public class ChatHub : Hub
         await Clients.Caller.SendAsync("GetConnectionId", Context.ConnectionId);
     }
 
-    // public IEnumerable<string> GetAllActiveConnections()
-    // {
-    //     return _connections.GetConnections("bob");
-    // }
+    private async Task<string> RandomUsername()
+    {
+        var listNames = (await JsonFileReader.ReadAsync<RandomName[]>(@"assets\names.json"));
+        var random = listNames.PickRandom();
+
+        while (_connections.KeyExists(random.Name))
+        {
+            random = listNames.PickRandom();
+        }
+
+        return await Task.FromResult(random.Name);
+    }
+
+    private async Task<string> RandomPhoto()
+    {
+        var listPhotos = (await JsonFileReader.ReadAsync<RandomName[]>(@"assets\imagesName.json"));
+
+        return await Task.FromResult(listPhotos.PickRandom().Name);
+    }
 }

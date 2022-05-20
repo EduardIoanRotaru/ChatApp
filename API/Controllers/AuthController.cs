@@ -41,6 +41,7 @@ namespace API.Controllers
             {
                 Username = userForRegisterDto.Username,
                 Email = userForRegisterDto.Email,
+                UserProfile = new UserProfile()
             };
 
             var createdUser = await _authService.Register(newUser, userForRegisterDto.Password);
