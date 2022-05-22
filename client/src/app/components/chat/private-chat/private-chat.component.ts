@@ -59,9 +59,4 @@ export class PrivateChatComponent implements OnInit {
   openComponent() {
     this.helperService.emitComponentIndex(this.componentIndex);
   }
-
-  public addEmoji(event: any) {
-    this.privateMessage = `${this.privateMessage}${event.emoji.native}`;
-    this.isEmojiPickerVisible = false;
-  }
 }

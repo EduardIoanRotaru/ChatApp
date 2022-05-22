@@ -53,27 +53,32 @@ public class ChatHub : Hub
 
             if (user != null) userprofile.Id = id;
 
-            if (username == null)
+            if (user.Name == null || user.PhotoUrl == null)
             {
-                username = await RandomUsername();
-                user.Name = username;
+                if (user.Name == null)
+                {
+                    user.Name = await RandomUsername();
+                }
+
+                if (user.PhotoUrl == null)
+                {
+                    user.PhotoUrl = await RandomPhoto();
+                }
+
+                _context.Attach(user);
+                _context.Entry(user).State = EntityState.Modified;
+
+                await _context.SaveChangesAsync();
             }
 
-            if (randomPhoto == null)
-            {
-                randomPhoto = await RandomPhoto();
-                user.PhotoUrl = randomPhoto;
-            }
+            _httpContextAccessor.HttpContext.Items["username"] = userprofile.Name;
 
-            _context.Attach(user);
-            _context.Entry(user).State = EntityState.Modified;
+            userprofile.ImagePublicId = user.PublicId;
+            userprofile.Name = user.Name;
+            userprofile.PhotoUrl = user.PhotoUrl;
 
-            if (await _context.SaveChangesAsync() > 0)
-            {
-                userprofile.ImagePublicId = user.PublicId;
-                userprofile.Name = user.Name;
-                userprofile.PhotoUrl = user.PhotoUrl;
-            }
+            username = user.Name;
+            randomPhoto = user.PhotoUrl;
         }
         else
         {
@@ -82,9 +87,9 @@ public class ChatHub : Hub
 
             userprofile.Name = username;
             userprofile.PhotoUrl = randomPhoto;
-        }
 
-        _httpContextAccessor.HttpContext.Items["username"] = username;
+            _httpContextAccessor.HttpContext.Items["username"] = username;
+        }
 
         _connections.Add(username, Context.ConnectionId);
 

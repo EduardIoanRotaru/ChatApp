@@ -1,7 +1,6 @@
 V1
 public chat
 users list
-emoticons
 private chat
 basic dumb css
 Authentication and Authorization
@@ -13,16 +12,19 @@ Users get a random image
 Registered users can change their chat name and photo also can create their own group (just add the btn in client)
     -- save in db user profile and connect to the hub with it
 Details - like validation, opening chats from user list too
+add own emoticons 
 
 f̶r̶i̶e̶n̶d̶l̶i̶s̶t̶ -̶   pointless task
+last css, try a decent one
 
 V3
 Create own chat by group, give administrator role and be able to give roles or ban people
 Custom css for each group - some basic colors to change
 notify when new private message
 status, disconnected or connected
-add own emoticons 
 
-Bugs
-Connectionlist not retrieved properly anymore
-Adding Removing static vs cloud images not working properly
+Bugs after V2
+Fixed - Connectionlist not retrieved properly anymore
+Fixed - Adding Removing static vs cloud images not working properly
+
+OnDisconnectasync throws exception sometimes, fix after v3

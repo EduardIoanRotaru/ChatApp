@@ -43,7 +43,7 @@ namespace API.Services
             var userProfile = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == id);
 
             userProfile.Name = userProfileDto.Name;
-            userProfile.PhotoUrl = userProfile.PhotoUrl;
+            userProfile.PhotoUrl = userProfileDto.PhotoUrl;
             userProfile.PublicId = null;
 
             _context.Attach(userProfile);

@@ -1,7 +1,12 @@
-<h1 class="text-center p-4">Chat App v1</h1>
-
-<p *ngIf="authService.isLoggedIn$ | async" (click)="logout()">Logout</p>
-<p *ngIf="!(authService.isLoggedIn$ | async)">Login</p>
-<p *ngIf="!(authService.isLoggedIn$ | async)">Register</p>
+<h1 class="text-center p-4">Chat App v2.01</h1>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-sm-10" style="display:inline-flex;">
+            <p class="px-2" *ngIf="authService.isLoggedIn$ | async" (click)="logout()">Logout</p>
+            <p [routerLink]="['/login']" class="px-2" *ngIf="!(authService.isLoggedIn$ | async)">Login</p>
+            <p [routerLink]="['/register']" class="px-2" *ngIf="!(authService.isLoggedIn$ | async)">Register</p>
+        </div>
+    </div>
+</div>
 
 <router-outlet></router-outlet>

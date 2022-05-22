@@ -22,10 +22,6 @@
               <button class="btn btn-primary h-50" style="align-self:middle;" type="submit" id="sendmessage" [disabled]="!chatForm.valid">
                 Send
               </button>
-              <button class="emoji-btn" (click)="isEmojiPickerVisible = !isEmojiPickerVisible;">😀</button>
-              <br>
-              <emoji-mart class="emoji-mart" *ngIf="isEmojiPickerVisible" (emojiSelect)="addEmoji($event)"
-                title="Choose your emoji"></emoji-mart>
             </form>
           </div>
         </div>

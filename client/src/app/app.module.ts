@@ -16,6 +16,7 @@ import { RegisterComponent } from './components/auth/register/register.component
 // import { StartupService } from './services/startup.service';
 import { PrivateChatComponent } from './components/chat/private-chat/private-chat.component';
 import { JwtInterceptor } from './services/jwtInterceptor';
+import { EmojiDirective } from './shared/directives/emoji.directive';
 
 // export function startupServiceFactory(startupService: StartupService): Function {
 //   return () => startupService.load();
@@ -27,7 +28,8 @@ import { JwtInterceptor } from './services/jwtInterceptor';
     LoginComponent,
     ChatComponent,
     RegisterComponent,
-    PrivateChatComponent
+    PrivateChatComponent,
+    EmojiDirective
   ],
   imports: [
     CommonModule,

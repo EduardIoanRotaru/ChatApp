@@ -48,6 +48,15 @@ export class ChatComponent implements OnInit, OnDestroy {
 	public textArea: string = '';
 	public isEmojiPickerVisible: boolean = false;
 
+	tabName = '';
+
+	mapEmoji = {
+		'%demon%': '👹',
+		'%angry%': '🤬',
+		'%shit%': '💩',
+		'%clown%': '🤡'
+	};
+
 	@ViewChild('componentHolder', { read: ViewContainerRef }) componentHolder!: ViewContainerRef;
 
 	constructor(private userService: UserProfileService,
@@ -74,7 +83,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.componentRef.destroy();
+		// this.componentRef.destroy();
+	}
+
+	openComponent(){
+
 	}
 
 	public createNewPrivateMessageComponent(senderName: string, senderConnectionId: any): void {
@@ -134,13 +147,6 @@ export class ChatComponent implements OnInit, OnDestroy {
 			});
 		})
 	}
-
-
-	// disable button if form not touched
-	// update static image just from clicking
-	// when I select a static image
-	// -- check if there is a publicIdImage to delete
-	// if true then delete the image from cloud and remove the publicId from db
 
 	public updateImage(imageUrl: any) {
 		this.photo = imageUrl;
@@ -241,5 +247,21 @@ export class ChatComponent implements OnInit, OnDestroy {
 
 				this.privateChats.push(senderConnectionId.toString());
 			});
+	}
+
+	editTextareaMessage() {
+		for (let i in this.mapEmoji) {
+			let regex = new RegExp(this.escapeSpecialChars(i), 'gim');
+			this.message = this.message = this.message.replace(regex, (this.mapEmoji as any)[i]);
+		  }
+	}
+
+	insertEmojiInMessage(emoji:string,i: number) {
+		 this.message = this.message = this.message + `${ emoji }`;
+		 this.editTextareaMessage();
+	}
+
+	private escapeSpecialChars(regex: any) {
+		return regex.replace(/([()[{*+.$^\\|?])/g, '\\$1');
 	}
 }
