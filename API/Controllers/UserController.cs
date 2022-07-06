@@ -49,6 +49,7 @@ namespace API.Controllers
         }
 
         [HttpGet("getAllImages")]
+        [AllowAnonymous]
         public async Task<ActionResult> GetAllImages()
         {
             var result = await _userService.GetFreeImagesUrls();

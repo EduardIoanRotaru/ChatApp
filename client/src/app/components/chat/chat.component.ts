@@ -5,7 +5,8 @@ import { HubService } from 'src/app/services/hub.service';
 import { PrivateChatComponent } from './private-chat/private-chat.component';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { UserProfileService } from 'src/app/services/userProfile.service';
-import { map, pipe } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
+import { LoginComponent } from '../auth/login/login.component';
 
 @Component({
 	selector: 'app-chat',
@@ -30,7 +31,13 @@ export class ChatComponent implements OnInit, OnDestroy {
 		photoUrl: string
 	} = {} as { name: string, photoUrl: string };
 
-	privateMessages: BehaviorSubject<string> = new BehaviorSubject<string>('');
+	privateMessages: BehaviorSubject<{
+		img: any,
+		message: string
+	}> = new BehaviorSubject<{
+		img: any,
+		message: string
+	}>(null as any);
 
 	privateChats: string[] = []
 	photoBackend: any;
@@ -59,8 +66,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 
 	@ViewChild('componentHolder', { read: ViewContainerRef }) componentHolder!: ViewContainerRef;
 
+	rootChatOpen: boolean = true;
+
 	constructor(private userService: UserProfileService,
 		private modalService: NgbModal,
+		public authService: AuthService,
 		private hubService: HubService,
 		private componentFactoryResolver: ComponentFactoryResolver,
 		private helperService: HelperService) { }
@@ -70,24 +80,25 @@ export class ChatComponent implements OnInit, OnDestroy {
 		this.hubService.startConnection();
 		this.updateConnectionList();
 
-		this.helperService.data$.subscribe(index => {
-			this.componentRefTabs.forEach((tab: any) => {
-				tab.component.instance.visible = false;
-			});
+		// this.helperService.data$.subscribe(index => {
+		// 	this.componentRefTabs.forEach((tab: any) => {
+		// 		tab.component.instance.visible = false;
+		// 	});
 
-			this.componentRefTabs[index].component.instance.visible = true;
-		})
+		// 	this.componentRefTabs[index].component.instance.visible = true;
+		// })
 	}
 
-	ngAfterViewInit() {
+	public sendMessage() {
+		if (!this.connectionId) {
+			this.hubService.hubConnection
+				.invoke('SendMessage', this.username, this.photo, this.message)
+				.catch(err => console.error(err));
+		}
 	}
 
 	ngOnDestroy() {
 		// this.componentRef.destroy();
-	}
-
-	openComponent(){
-
 	}
 
 	public createNewPrivateMessageComponent(senderName: string, senderConnectionId: any): void {
@@ -116,109 +127,51 @@ export class ChatComponent implements OnInit, OnDestroy {
 			this.componentRefTabs[this.enabledLastTabIndex].component.instance.visible = true;
 			this.componentRefTabs[this.enabledLastTabIndex].component.instance.tabName = senderName;
 
+			this.tabName = senderName;
+			this.rootChatOpen = false;
+
 			if (this.enabledLastTabIndex > 0)
 				this.componentRefTabs[this.enabledLastTabIndex - 1].component.instance.visible = false;
+
+			this.componentRef.instance.componentRefTabs = this.componentRefTabs;
 		}
 	}
 
-	public sendMessage() {
-		if (!this.connectionId) {
-			this.hubService.hubConnection
-				.invoke('SendMessage', this.username, this.photo, this.message)
-				.catch(err => console.error(err));
-		}
-	}
-
-	public openTab(event: any) {
+	public openTab(i: any) {
 		this.componentRefTabs[this.enabledLastTabIndex].component.instance.visible = false;
-		this.componentRefTabs[event].component.instance.visible = true;
+		this.componentRefTabs[i].component.instance.visible = true;
+		this.enabledLastTabIndex = i;
+		this.rootChatOpen = false;
 	}
 
-	public openModal(content: any) {
-		this.userService.getAllImages().subscribe((response: any) => {
-			this.images = response;
-		}, (error: any) => {
-			console.log(error);
-		}, () => {
-			this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' }).result.then((result) => {
-				this.closeResult = `Closed with: ${result}`;
-			}, (reason: any) => {
-				this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
-			});
-		})
-	}
-
-	public updateImage(imageUrl: any) {
-		this.photo = imageUrl;
-		this.updateProfileDto.photoUrl = this.photo;
-
-		this.deleteCloudPicture();
-	}
-
-	public uploadImage(event: any) {
-		this.userService.uploadImage(this.userid, event.target.files[0]).subscribe((result: any) => {
-			this.photo = result['photoUrl'];
-			this.publicIdPhotoToDelete = result['publicId'];
-		}, (error: any) => console.log(error),
-			() => {
-				this.deleteCloudPicture();
-			}
-		);
-	}
-
-	public saveProfile() {
-		this.updateProfileDto = {
-			name: this.username,
-			photoUrl: this.photo
-		}
-
-		this.userService.editUserProfile(this.userid, this.updateProfileDto).subscribe((result: any) => {
-			console.log(result)
-		}, (error: any) => {
-			console.log(error);
-		}, () => {
-			this.modalService.dismissAll();
-		});
-	}
-
-	private getDismissReason(reason: any): string {
-		if (reason === ModalDismissReasons.ESC) {
-			return 'by pressing ESC';
-		} else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
-			return 'by clicking on a backdrop';
-		} else {
-			return `with: ${reason}`;
+	selectMain() {
+		if (this.enabledLastTabIndex !== -1) {
+			this.enabledLastTabIndex = -1;
+			this.rootChatOpen = !this.rootChatOpen;
+			this.componentRefTabs[this.enabledLastTabIndex].component.instance.visible = false;
 		}
 	}
 
-	public addEmoji(event: any) {
-		this.message = `${this.message}${event.emoji.native}`;
-		this.isEmojiPickerVisible = false;
-	}
-
-	private deleteCloudPicture() {
-		if (this.publicIdPhotoToDelete)
-			if (!this.publicIdPhotoToDelete.includes("assets/")) {
-				this.userService.deleteImage(this.userid, this.publicIdPhotoToDelete).subscribe((result: any) => {
-				}, (error: any) => {
-					console.log(error)
-				}, () => {
-					// this.publicIdPhotoToDelete = this.photo;
-				})
-			}
+	destroyTab(i: any) {
+		this.componentRefTabs[i].component.destroy();
+		this.componentRefTabs.splice(i, 1);
 	}
 
 	private updateConnectionList() {
-		this.hubService.hubConnection.on('GetYourUsername', (userprofile) => {
-			this.username = userprofile.name;
-			this.userid = userprofile.id;
-			this.photo = userprofile.photoUrl;
-
-			this.publicIdPhotoToDelete = userprofile.imagePublicId;
-		});
+		// if (!this.hubService.localStorageProfile) {
+			this.hubService.hubConnection.on('GetYourUsername', (userprofile) => {
+				this.setProfile(userprofile);
+				localStorage.setItem('user_profile', JSON.stringify(userprofile));
+			});
+		// }
+		// else {
+		// 	const profile = JSON.parse(localStorage.getItem('user_profile')!);
+		// 	this.setProfile(profile);
+		// }
 
 		this.hubService.hubConnection.on('GetConnectionId', (connectionId) => {
 			this.clientConnectionId = connectionId;
+			localStorage.setItem('user_profile_connectionId', JSON.stringify(connectionId));
 		});
 
 		this.hubService.hubConnection.on('UpdateConnectionsList', (connections) => {
@@ -237,31 +190,133 @@ export class ChatComponent implements OnInit, OnDestroy {
 			.on('SendMessageToUser', (receiverName: string, receiverConnectionId: string, senderConnectionId: string, privateMessage: string, senderName: string) => {
 				const text = `${senderName}: ${privateMessage}`;
 
-				if (typeof this.componentRef === 'undefined')
-					this.createNewPrivateMessageComponent(receiverName, receiverConnectionId);
+				if (typeof this.componentRef === 'undefined') {
+					this.createNewPrivateMessageComponent(senderName, senderConnectionId);
+					this.privateChats.push(senderConnectionId.toString());
+				}
 
-				this.componentRef.instance.privateMessages.push(text)
+				const exists = this.privateChats.includes(senderConnectionId.toString());
+				if (!exists) {
+					this.createNewPrivateMessageComponent(senderName, senderConnectionId);
+				}
+
+				this.componentRef.instance.privateMessages.push({ message: text, img: '' })
 				this.componentRef.instance.isResponse = true;
 				this.componentRef.instance.responseConnectionId = senderConnectionId;
 				this.componentRef.instance.responseName = receiverName;
-
-				this.privateChats.push(senderConnectionId.toString());
 			});
 	}
 
+	openLogin() {
+		const modalRef = this.modalService.open(LoginComponent);
+	}
+
+	logout() {
+		this.authService.logout();
+	}
+
+	private setProfile(profile: any) {
+		this.username = profile.name;
+		this.userid = profile.id;
+		this.photo = profile.photoUrl;
+
+		this.publicIdPhotoToDelete = profile.imagePublicId;
+	}
+
+	/* #region  Modal stuff */
+	public openModal(content: any) {
+		this.userService.getAllImages().subscribe((response: any) => {
+			this.images = response;
+		}, (error: any) => {
+			console.log(error);
+		}, () => {
+			this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' }).result.then((result) => {
+				this.closeResult = `Closed with: ${result}`;
+			}, (reason: any) => {
+				this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+			});
+		})
+	}
+
+	public uploadImage(event: any) {
+		this.userService.uploadImage(this.userid, event.target.files[0]).subscribe((result: any) => {
+			this.photo = result['photoUrl'];
+			this.publicIdPhotoToDelete = result['publicId'];
+		}, (error: any) => console.log(error),
+			() => {
+				this.deleteCloudPicture();
+			}
+		);
+	}
+
+	public updateImage(imageUrl: any) {
+		this.photo = imageUrl;
+		this.updateProfileDto.photoUrl = this.photo;
+
+		this.deleteCloudPicture();
+	}
+
+	public saveProfile() {
+		this.updateProfileDto = {
+			name: this.username,
+			photoUrl: this.photo
+		}
+
+		this.userService.editUserProfile(this.userid, this.updateProfileDto).subscribe((result: any) => {
+			console.log(result)
+		}, (error: any) => {
+			console.log(error);
+		}, () => {
+			this.modalService.dismissAll();
+		});
+
+		// const localStorageProfile = JSON.parse(localStorage.getItem('user_profile')!);
+		// localStorageProfile.username = this.updateProfileDto.name;
+		// localStorageProfile.photoUrl = this.updateProfileDto.photoUrl;
+
+		// localStorage.removeItem('user_profile');
+		// localStorage.setItem('user_profile', JSON.stringify(localStorageProfile))
+
+	}
+
+	private getDismissReason(reason: any): string {
+		if (reason === ModalDismissReasons.ESC) {
+			return 'by pressing ESC';
+		} else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
+			return 'by clicking on a backdrop';
+		} else {
+			return `with: ${reason}`;
+		}
+	}
+
+	private deleteCloudPicture() {
+		if (this.publicIdPhotoToDelete)
+			if (!this.publicIdPhotoToDelete.includes("assets/")) {
+				this.userService.deleteImage(this.userid, this.publicIdPhotoToDelete).subscribe((result: any) => {
+				}, (error: any) => {
+					console.log(error)
+				}, () => {
+					// this.publicIdPhotoToDelete = this.photo;
+				})
+			}
+	}
+	/* #endregion */
+
+	/* #region  Emoticons */
 	editTextareaMessage() {
 		for (let i in this.mapEmoji) {
 			let regex = new RegExp(this.escapeSpecialChars(i), 'gim');
 			this.message = this.message = this.message.replace(regex, (this.mapEmoji as any)[i]);
-		  }
+		}
 	}
 
-	insertEmojiInMessage(emoji:string,i: number) {
-		 this.message = this.message = this.message + `${ emoji }`;
-		 this.editTextareaMessage();
+	insertEmojiInMessage(emoji: string, i: number) {
+		this.message = this.message = this.message + `${emoji}`;
+		this.editTextareaMessage();
 	}
 
 	private escapeSpecialChars(regex: any) {
 		return regex.replace(/([()[{*+.$^\\|?])/g, '\\$1');
+		/* #endregion */
 	}
 }

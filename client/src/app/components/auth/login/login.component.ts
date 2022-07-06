@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuthService } from 'src/app/services/auth.service';
-import { LoginDto } from 'src/app/shared/dto/logindto';
+import { RegisterComponent } from '../register/register.component';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +14,7 @@ export class LoginComponent implements OnInit {
   token: string = '';
   loginModel: any = {};
 
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router, public activeModal: NgbActiveModal, private modalService: NgbModal) { }
 
   ngOnInit(): void {
   }
@@ -27,5 +28,10 @@ export class LoginComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigateByUrl('/')
+  }
+
+  openRegister() {
+    this.modalService.open(RegisterComponent);
+    this.activeModal.dismiss();
   }
 }

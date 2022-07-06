@@ -1,6 +1,7 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormControl, FormBuilder, FormGroup, ValidatorFn, Validators, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
@@ -14,7 +15,7 @@ export class RegisterComponent implements OnInit {
   validationErrors: string[] = [];
 
   constructor(private authService: AuthService, 
-    private fb: FormBuilder, private router: Router) { }
+    private fb: FormBuilder, private router: Router, public activeModal: NgbActiveModal) { }
 
   ngOnInit(): void {
     this.intitializeForm();
@@ -65,6 +66,7 @@ export class RegisterComponent implements OnInit {
 
   cancel() {
     this.cancelRegister.emit(false);
+    this.activeModal.dismiss();
   }
 }
 

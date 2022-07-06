@@ -25,6 +25,10 @@ export class StartupService {
     //     .catch((err: any) => Promise.resolve());
 	// }
 
+	hasProfile() {
+		
+	}
+
 	get startupData(): any {
 		return this._startupData;
 	}

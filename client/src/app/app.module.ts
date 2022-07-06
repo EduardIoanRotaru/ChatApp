@@ -17,10 +17,12 @@ import { RegisterComponent } from './components/auth/register/register.component
 import { PrivateChatComponent } from './components/chat/private-chat/private-chat.component';
 import { JwtInterceptor } from './services/jwtInterceptor';
 import { EmojiDirective } from './shared/directives/emoji.directive';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { StartupService } from './services/startup.service';
 
-// export function startupServiceFactory(startupService: StartupService): Function {
-//   return () => startupService.load();
-// }
+export function startupServiceFactory(startupService: StartupService): Function {
+  return () => startupService.hasProfile();
+}
 
 @NgModule({
   declarations: [
@@ -43,18 +45,19 @@ import { EmojiDirective } from './shared/directives/emoji.directive';
   providers: [VisitorsService, 
     // CanActivateGuard, 
     ErrorInterceptor,  
-    // StartupService,
-    // {
-    //     provide: APP_INITIALIZER,
-    //     useFactory: startupServiceFactory,
-    //     deps: [StartupService],
-    //     multi: true
-    // },
+    StartupService,
+    {
+        provide: APP_INITIALIZER,
+        useFactory: startupServiceFactory,
+        deps: [StartupService],
+        multi: true
+    },
     {provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true},
   ],
   bootstrap: [AppComponent],
   entryComponents: [
-    PrivateChatComponent
+    PrivateChatComponent,
+    NgbModule
   ]
 })
 export class AppModule { }

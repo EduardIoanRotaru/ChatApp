@@ -1,15 +1,25 @@
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-sm-8">
-      <div class="text-white">
-        <div style="height:500px; overflow-y: scroll; background-color: #0C6178">
+      <div *ngIf="rootChatOpen" class="text-white">
+        <div  style="height:500px; overflow-y: scroll; background-color: #0C6178">
           <div *ngFor="let message of messages" style="display: flex;align-items:center;">
             <img src="{{message.img}}" alt="" height="30" width="30" style="margin-top:10px;margin-left:10px">
             <span style="padding:20px">{{message.message}}</span>
           </div>
         </div>
       </div>
-      <div class="text-white">
+       
+      <div *ngIf="rootChatOpen" class="tab">
+        <button type="button" class="btn btn-primary active" (click)="selectMain()">Main</button>
+        <div *ngFor="let item of componentRefTabs; let i = index" style="display:inline-block;">
+          <button type="button" class="btn btn-secondary active"
+            (click)="openTab(i)">{{item.component.instance.tabName}}</button>
+          <button type="button" class="btn btn-secondary active" (click)="destroyTab(i)">x</button>
+        </div>
+      </div>
+     
+      <div *ngIf="rootChatOpen" class="text-white">
         <label for="message">Message</label>
         <form (ngSubmit)="sendMessage()" #chatForm="ngForm" style="align-items:center;display:flex;">
           <div class="form-group">
@@ -32,20 +42,30 @@
       </div>
     </div>
     <div class="col-sm-2">
-      <div class="text-white" style="height:500px;background-color:#748CF8;padding:10px;">
+      <div *ngIf="rootChatOpen" class="text-white" style="height:500px;background-color:#748CF8;padding:10px;">
         <p style="display:flex;" (click)="openModal(content)">{{username}}</p>
         <div *ngFor="let con of connections | keyvalue">
-          <p style="display:flex" (click)="createNewPrivateMessageComponent(con.key, con.value)">{{con.key}}</p>
+          <p style="display:flex" (click)="createNewPrivateMessageComponent(con.key, con.value)">{{con.key}} - {{con.value}}</p>
         </div>
       </div>
-      <button class="btn btn-primary">Create group</button>
+      <button *ngIf="rootChatOpen" class="btn btn-primary">Create group</button>
+      <div *ngIf="rootChatOpen"  class="row justify-content-left">
+        <div class="col-sm-10 py-3" style="display:inline-flex;">
+          <a class="px-2 link-primary" *ngIf="!(authService.isLoggedIn$ | async)" (click)="openLogin()">Login</a>
+          <p class="px-2" *ngIf="authService.isLoggedIn$ | async" (click)="logout()">Logout</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
-<!-- Private chat -->
-<div class="container" (openComponent)="openTab($event)">
-  <div class="tabs" #componentHolder></div>
+<div class="container">
+  <div class="row justify-content-center">
+    <!-- Private chat -->
+    <div class="col-12" (openComponent)="openTab($event)">
+      <div class="tabs" #componentHolder>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Profile Edit -->

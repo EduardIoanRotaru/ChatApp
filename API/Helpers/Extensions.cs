@@ -97,6 +97,9 @@ namespace API.Helpers
                       {
                           var accessToken = context.Request.Query["access_token"];
 
+                          var hasProfileOnLocalStorage = context.Request.Query["localStorageProfile"];
+                          context.HttpContext.Items["localStorageProfile"] = hasProfileOnLocalStorage;
+
                           var path = context.HttpContext.Request.Path;
                           if (!string.IsNullOrEmpty(accessToken) &&
                               (path.StartsWithSegments("/chathub")))

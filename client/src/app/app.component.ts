@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LoginComponent } from './components/auth/login/login.component';
+import { RegisterComponent } from './components/auth/register/register.component';
 import { AuthService } from './services/auth.service';
 import { StartupService } from './services/startup.service';
 
@@ -23,8 +26,5 @@ export class AppComponent implements OnInit {
     // }
     this.authService.isLoggedIn();
   }
-
-  logout() {
-    this.authService.logout();
-  }
 }
+

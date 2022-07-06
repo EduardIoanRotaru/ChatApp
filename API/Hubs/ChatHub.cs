@@ -7,6 +7,8 @@ using System.Drawing;
 using API.DAL;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using System.Text.Json;
+using Newtonsoft.Json;
 
 [EnableCors("CorsPolicy")]
 public class ChatHub : Hub
@@ -17,6 +19,7 @@ public class ChatHub : Hub
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserDbContext _context;
     private readonly IMapper _mapper;
+    private bool HasProfile { get; set; }
 
     public ChatHub(
         IHttpContextAccessor httpContextAccessor, UserDbContext context, IMapper mapper)
@@ -47,53 +50,22 @@ public class ChatHub : Hub
 
         if (tokenValid)
         {
-            var userId = int.TryParse(_httpContextAccessor.HttpContext.Items["id"].ToString(), out int id);
-
-            var user = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user != null) userprofile.Id = id;
-
-            if (user.Name == null || user.PhotoUrl == null)
-            {
-                if (user.Name == null)
-                {
-                    user.Name = await RandomUsername();
-                }
-
-                if (user.PhotoUrl == null)
-                {
-                    user.PhotoUrl = await RandomPhoto();
-                }
-
-                _context.Attach(user);
-                _context.Entry(user).State = EntityState.Modified;
-
-                await _context.SaveChangesAsync();
-            }
-
-            _httpContextAccessor.HttpContext.Items["username"] = userprofile.Name;
-
-            userprofile.ImagePublicId = user.PublicId;
-            userprofile.Name = user.Name;
-            userprofile.PhotoUrl = user.PhotoUrl;
-
-            username = user.Name;
-            randomPhoto = user.PhotoUrl;
+            await ConnectRegisteredUserWithToken(userprofile);
         }
         else
         {
-            username = await RandomUsername();
-            randomPhoto = await RandomPhoto();
+            var localStorageProfile = _httpContextAccessor.HttpContext.Items["localStorageProfile"];
 
-            userprofile.Name = username;
-            userprofile.PhotoUrl = randomPhoto;
-
-            _httpContextAccessor.HttpContext.Items["username"] = username;
+            if (localStorageProfile == null)
+            {
+                await ConnectAnonymousUserFirstTime(userprofile);
+            }
+            else
+            {
+                await ConnectAnonymousUserWithPersistingProfile(userprofile);
+            }
         }
 
-        _connections.Add(username, Context.ConnectionId);
-
-        await Clients.Caller.SendAsync("GetYourUsername", userprofile);
         await Clients.All.SendAsync("UpdateConnectionsList", _connections.GetAllActiveConnections());
     }
 
@@ -129,5 +101,66 @@ public class ChatHub : Hub
         var listPhotos = (await JsonFileReader.ReadAsync<RandomName[]>(@"assets\imagesName.json"));
 
         return await Task.FromResult(listPhotos.PickRandom().Name);
+    }
+
+    private async Task ConnectRegisteredUserWithToken(UserProfileDto userprofile)
+    {
+        var userId = int.TryParse(_httpContextAccessor.HttpContext.Items["id"].ToString(), out int id);
+
+        var user = await _context.UserProfiles.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user != null) userprofile.Id = id;
+
+        if (user.Name == null || user.PhotoUrl == null)
+        {
+            if (user.Name == null)
+            {
+                user.Name = await RandomUsername();
+            }
+
+            if (user.PhotoUrl == null)
+            {
+                user.PhotoUrl = await RandomPhoto();
+            }
+
+            _context.Attach(user);
+            _context.Entry(user).State = EntityState.Modified;
+
+            await _context.SaveChangesAsync();
+        }
+
+        _httpContextAccessor.HttpContext.Items["username"] = userprofile.Name;
+
+        userprofile.ImagePublicId = user.PublicId;
+        userprofile.Name = user.Name;
+        userprofile.PhotoUrl = user.PhotoUrl;
+
+        _connections.Add(userprofile.Name, Context.ConnectionId);
+        await Clients.Caller.SendAsync("GetYourUsername", userprofile);
+    }
+
+    private async Task ConnectAnonymousUserFirstTime(UserProfileDto userprofile)
+    {
+        userprofile.Name = await RandomUsername();
+        userprofile.PhotoUrl =  await RandomPhoto();
+
+        _httpContextAccessor.HttpContext.Items["username"] = userprofile.Name;
+
+        _connections.Add(userprofile.Name, Context.ConnectionId);
+        await Clients.Caller.SendAsync("GetYourUsername", userprofile);
+    }
+
+    private async Task ConnectAnonymousUserWithPersistingProfile(UserProfileDto userprofile)
+    {
+        var profileData = _httpContextAccessor.HttpContext.Items["localStorageProfile"];
+        var profileDataDeserialized = JsonConvert.DeserializeObject<UserProfileDto>(profileData.ToString());
+
+        userprofile.Name = profileDataDeserialized.Name;
+        userprofile.PhotoUrl = profileDataDeserialized.PhotoUrl;
+
+        _httpContextAccessor.HttpContext.Items["username"] = userprofile.Name;
+
+        _connections.Add(userprofile.Name, Context.ConnectionId);
+        await Clients.Caller.SendAsync("GetYourUsername", userprofile);
     }
 }
